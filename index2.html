@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6S 現場走動式稽核系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #fafaf9; }
+        .audit-item { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-active-ok { background-color: #22c55e !important; color: white !important; border-color: transparent !important; box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.2); }
+        .btn-active-ng { background-color: #ef4444 !important; color: white !important; border-color: transparent !important; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2); }
+        .ng-action-box { transition: all 0.3s ease; max-height: 0; overflow: hidden; opacity: 0; }
+        .ng-action-box.show { max-height: 1500px; opacity: 1; padding-top: 1.5rem; }
+        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #0d9488; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .photo-upload-label { border: 2px dashed #e5e7eb; transition: all 0.2s ease; cursor: pointer; }
+        .photo-upload-label:hover { border-color: #ef4444; background-color: #fff1f2; }
+        .chart-container { position: relative; height: 220px; width: 100%; }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <!-- 
+        Application Architecture Plan:
+        - Primary: Mobile-first 6S audit form (Sort, Set, Shine, Standardize, Sustain, Safety).
+        - Logic: Interactive status buttons (OK/NG) with conditional photo/text feedback for NG states.
+        - Data Visualization: Real-time calculation of pass rates and category distribution (local session data).
+        - Persistence: Direct Base64 image and metadata relay to Google Apps Script.
+    -->
+
+    <div class="max-w-2xl mx-auto space-y-8 pb-12">
+        
+        <!-- 稽核表主容器 -->
+        <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-stone-200/50 overflow-hidden border border-stone-100">
+            
+            <div class="bg-stone-800 p-8 text-white">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="bg-teal-500 text-[10px] font-black px-2 py-1 rounded-md tracking-widest uppercase italic">Master Version v3.1</span>
+                    <span id="current-time" class="text-stone-400 text-xs font-mono"></span>
+                </div>
+                <h1 class="text-3xl font-black tracking-tight mb-1">6S 現場走動式稽核</h1>
+                <p class="text-stone-400 text-sm font-medium italic">系統已就緒，隨時同步後台</p>
+            </div>
+
+            <form id="auditForm" class="p-6 sm:p-10 space-y-10">
+                
+                <!-- 基本資料 -->
+                <section class="space-y-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-1.5 h-6 bg-teal-500 rounded-full"></div>
+                        <h2 class="text-lg font-bold text-stone-800 tracking-tight">基本資料區域</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] font-black text-stone-400 uppercase tracking-tighter ml-1">巡檢日期</label>
+                            <input type="date" id="date" class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500/20">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] font-black text-stone-400 uppercase tracking-tighter ml-1">巡檢區域</label>
+                            <select id="area" class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm font-medium outline-none appearance-none focus:ring-2 focus:ring-teal-500/20">
+                                <option value="辦公室前">1. 辦公室前</option>
+                                <option value="廣場區">2. 廣場區</option>
+                                <option value="鐵管區">3. 鐵管區</option>
+                                <option value="沖、折床區">4. 沖、折床區</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] font-black text-stone-400 uppercase tracking-tighter ml-1">巡檢人員</label>
+                            <input type="text" id="inspector" placeholder="請輸入姓名" class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm outline-none">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] font-black text-stone-400 uppercase tracking-tighter ml-1">現場作業員</label>
+                            <select id="operator" class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm outline-none appearance-none staff-list">
+                                <option value="">請選擇現場人員...</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-stone-100">
+
+                <!-- 6S 稽核核心清單 -->
+                <section class="space-y-8">
+                    <div class="flex items-center gap-3">
+                        <div class="w-1.5 h-6 bg-teal-500 rounded-full"></div>
+                        <h2 class="text-lg font-bold text-stone-800 tracking-tight">6S 現場檢查清單</h2>
+                    </div>
+                    
+                    <div id="checkItemsContainer" class="space-y-8">
+                        
+                        <!-- 項目 1: 整理 -->
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="1.整理(Sort)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 1: Sort</span>
+                                <h3 class="font-bold text-stone-800 text-lg">整理：走道暢通，無雜物堆放？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase flex items-center gap-1">📸 異常拍照 (必填)</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-200">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl border border-stone-200 shadow-sm">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="請說明異常狀況與改善要求..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none focus:ring-1 focus:ring-red-400 resize-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 項目 2: 整頓 -->
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="2.整頓(Set)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 2: Set in Order</span>
+                                <h3 class="font-bold text-stone-800 text-lg">整頓：工具模具定位定量、標示明確？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-200">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl shadow-sm">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述缺失細節..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none resize-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 項目 3: 清掃 -->
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="3.清掃(Shine)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 3: Shine</span>
+                                <h3 class="font-bold text-stone-800 text-lg">清掃：環境機台無油漬、工作檯面潔淨？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-200">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl shadow-sm">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述髒污問題..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none resize-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 項目 4: 清潔 -->
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="4.清潔(Standard)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 4: Standardize</span>
+                                <h3 class="font-bold text-stone-800 text-lg">清潔：維持上述成果並落實標準化標示？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-200">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl shadow-sm">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述標準化缺失..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none resize-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 項目 5: 素養 -->
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="5.素養(Sustain)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 5: Sustain</span>
+                                <h3 class="font-bold text-stone-800 text-lg">素養：人員穿戴 PPE 並遵守作業守則？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-200">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl shadow-sm">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述人員規範問題..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none resize-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 項目 6: 安全 -->
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="6.安全(Safety)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 6: Safety</span>
+                                <h3 class="font-bold text-stone-800 text-lg">安全：消防設備動線暢通、無工安隱患？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 安全隱患拍照</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-200">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl shadow-sm">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述安全改善指示..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none resize-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <div class="pt-6">
+                    <button type="button" id="submitBtn" onclick="submitAudit()" class="w-full bg-stone-800 hover:bg-black text-white font-black py-6 rounded-[2rem] shadow-xl transition-all transform active:scale-[0.98] text-sm uppercase tracking-[0.2em]">
+                        確認提交巡檢紀錄
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 數據整理看板 (Dashboard) -->
+        <div class="bg-white rounded-[2.5rem] shadow-xl p-8 border border-stone-100">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-1.5 h-6 bg-teal-500 rounded-full"></div>
+                <h2 class="text-xl font-bold text-stone-800 tracking-tight">稽核即時統計圖表</h2>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 text-center">
+                <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100 transition-all">
+                    <div class="text-[10px] font-black text-stone-400 uppercase mb-1">Check Count</div>
+                    <div class="text-2xl font-black text-stone-800" id="stat-total">0</div>
+                    <div class="text-[9px] font-bold text-stone-400">總稽核數</div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-2xl border border-green-100 transition-all">
+                    <div class="text-[10px] font-black text-green-600 uppercase mb-1">Pass Rate</div>
+                    <div class="text-2xl font-black text-green-600" id="stat-ok-rate">0%</div>
+                    <div class="text-[9px] font-bold text-green-400">合格率</div>
+                </div>
+                <div class="bg-red-50 p-4 rounded-2xl border border-red-100 col-span-2 md:col-span-1 transition-all">
+                    <div class="text-[10px] font-black text-red-600 uppercase mb-1">NG Items</div>
+                    <div class="text-2xl font-black text-red-600" id="stat-ng">0</div>
+                    <div class="text-[9px] font-bold text-red-400">異常件數</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="chart-container"><canvas id="ratioChart"></canvas></div>
+                <div class="chart-container"><canvas id="areaChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- 成功提交彈窗 -->
+        <div id="successModal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-md flex items-center justify-center p-6 z-50">
+            <div class="bg-white p-12 rounded-[3rem] text-center shadow-2xl max-w-sm w-full border border-stone-100 animate-in fade-in zoom-in duration-300">
+                <div class="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-8 font-black">✓</div>
+                <h3 class="text-2xl font-black text-stone-800 tracking-tight">資料已成功同步</h3>
+                <p class="text-stone-500 mt-4 leading-relaxed font-medium">數據已傳送至雲端試算表。請確認現場異常均已改善。</p>
+                <button onclick="location.reload()" class="mt-10 w-full py-5 bg-teal-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-teal-100">下一次巡檢</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // *** 您的 Google Apps Script 網址 (確認尾端為 /exec) ***
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwqb0fadDyi5XKnZPvs73FRQ60PS4acF5M4J0dRgxyLs90PIv0KUGpqALBPEiN-yclqDg/exec'; 
+
+        const staffNames = [
+            "林美貴 (0035)", "楊雪霞 (0654)", "葉子愷 (1476)", "阮文會 (A224)", 
+            "迪拉 (A274)", "阮文龍 (A313)", "黃郁雯 (1155)", "蕭元倡 (1225)", 
+            "陳柏旭 (1433)", "陳士丹 (1532)", "馬隆 (A273)", "馬文 (A275)", 
+            "丁文進 (A339)", "阮友商 (A368)", "傑南 (A369)", "爾森 (A370)"
+        ];
+
+        function initStaffDropdowns() {
+            document.querySelectorAll('.staff-list').forEach(select => {
+                staffNames.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name; opt.textContent = name;
+                    select.appendChild(opt);
+                });
+            });
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleString('zh-TW', { hour12: false });
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        function setStatus(btn, status) {
+            const container = btn.closest('.audit-item');
+            const actionBox = container.querySelector('.ng-action-box');
+            const allButtons = container.querySelectorAll('button');
+            
+            allButtons.forEach(b => b.classList.remove('btn-active-ok', 'btn-active-ng'));
+            container.setAttribute('data-status', status);
+
+            if (status === 'ok') {
+                btn.classList.add('btn-active-ok');
+                actionBox.classList.remove('show');
+                container.style.borderColor = "#22c55e";
+                container.style.backgroundColor = "#f0fdf4";
+            } else {
+                btn.classList.add('btn-active-ng');
+                actionBox.classList.add('show');
+                container.style.borderColor = "#ef4444";
+                container.style.backgroundColor = "#fef2f2";
+            }
+            refreshCharts();
+        }
+
+        function previewImage(input) {
+            const container = input.closest('.relative');
+            const preview = container.querySelector('.image-preview');
+            const img = preview.querySelector('img');
+            const label = container.querySelector('.photo-upload-label');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    label.classList.add('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeImage(btn) {
+            const container = btn.closest('.relative');
+            const input = container.querySelector('.photo-input');
+            const preview = container.querySelector('.image-preview');
+            const label = container.querySelector('.photo-upload-label');
+            input.value = "";
+            preview.classList.add('hidden');
+            label.classList.remove('hidden');
+        }
+
+        let ratioChart, areaChart;
+        function initCharts() {
+            const ctx1 = document.getElementById('ratioChart').getContext('2d');
+            ratioChart = new Chart(ctx1, {
+                type: 'doughnut',
+                data: { labels: ['OK', 'NG'], datasets: [{ data: [1, 0], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 0 }] },
+                options: { maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom' } } }
+            });
+            const ctx2 = document.getElementById('areaChart').getContext('2d');
+            areaChart = new Chart(ctx2, {
+                type: 'bar',
+                data: { labels: ['辦公', '廣場', '鐵管', '沖折'], datasets: [{ label: '異常次數', data: [0, 0, 0, 0], backgroundColor: '#1c1917', borderRadius: 8 }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } }
+            });
+        }
+
+        function refreshCharts() {
+            const items = document.querySelectorAll('.audit-item');
+            let okCount = 0, ngCount = 0;
+            items.forEach(item => {
+                const status = item.getAttribute('data-status');
+                if (status === 'ok') okCount++;
+                if (status === 'ng') ngCount++;
+            });
+            const total = okCount + ngCount;
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-ng').textContent = ngCount;
+            document.getElementById('stat-ok-rate').textContent = total > 0 ? Math.round((okCount / total) * 100) + '%' : '0%';
+            ratioChart.data.datasets[0].data = [okCount, ngCount];
+            ratioChart.update();
+        }
+
+        async function submitAudit() {
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            
+            // 驗證基本資料
+            if (!document.getElementById('date').value || !document.getElementById('inspector').value) {
+                alert('請填寫巡檢日期與人員姓名！');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> 正在同步雲端...';
+
+            const items = document.querySelectorAll('.audit-item');
+            const results = [];
+            
+            for (const item of items) {
+                const status = item.getAttribute('data-status');
+                if (status) {
+                    const imgInput = item.querySelector('.photo-input');
+                    let base64Image = "";
+                    if (imgInput && imgInput.files[0]) {
+                        base64Image = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.readAsDataURL(imgInput.files[0]);
+                        });
+                    }
+
+                    results.push({
+                        date: document.getElementById('date').value,
+                        area: document.getElementById('area').value,
+                        inspector: document.getElementById('inspector').value,
+                        operator: document.getElementById('operator').value,
+                        checkItem: item.getAttribute('data-item-name'),
+                        status: status,
+                        actionNote: item.querySelector('.action-note')?.value || '',
+                        responsiblePerson: item.querySelector('.responsible-person')?.value || '',
+                        photoData: base64Image
+                    });
+                }
+            }
+
+            if (results.length === 0) {
+                alert('請至少完成一項稽核狀態點擊！');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            try {
+                // 逐筆上傳確保穩定性 (mode: no-cors)
+                for (const row of results) {
+                    await fetch(scriptURL, { 
+                        method: 'POST', 
+                        mode: 'no-cors', 
+                        cache: 'no-cache', 
+                        body: JSON.stringify(row) 
+                    });
+                }
+                document.getElementById('successModal').classList.remove('hidden');
+            } catch (error) {
+                console.error(error);
+                alert('傳送失敗。請確認 Apps Script 部署設定是否為「所有人 (Anyone)」。');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        initStaffDropdowns();
+        initCharts();
+        document.getElementById('date').valueAsDate = new Date();
+    </script>
+</body>
+</html>
