@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6S 現場走動式稽核系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #fafaf9; }
+        .audit-item { transition: all 0.2s ease-in-out; }
+        .btn-active-ok { background-color: #22c55e !important; color: white !important; border-color: transparent !important; }
+        .btn-active-ng { background-color: #ef4444 !important; color: white !important; border-color: transparent !important; }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <!-- 稽核表主容器 -->
+    <div class="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-stone-100">
+        
+        <!-- 頂部標題 -->
+        <div class="bg-stone-800 p-6 text-white text-center">
+            <h1 class="text-2xl font-bold tracking-tight">6S 現場走動式稽核表</h1>
+            <p class="text-stone-400 text-sm mt-1">即時紀錄 · 立即改善 · 落實 6S 精神</p>
+        </div>
+
+        <form id="auditForm" class="p-6 space-y-8">
+            
+            <!-- 基本資料區塊 -->
+            <section class="space-y-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-teal-600 font-bold">●</span>
+                    <h2 class="text-sm font-bold text-stone-500 uppercase tracking-wider">基本資料</h2>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-400 mb-1">巡檢日期</label>
+                        <input type="date" id="date" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-400 mb-1">巡檢區域</label>
+                        <select id="area" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="辦公室前">1. 辦公室前</option>
+                            <option value="廣場區">2. 廣場區</option>
+                            <option value="鐵管區">3. 鐵管區</option>
+                            <option value="沖、折床區">4. 沖、折床區</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-400 mb-1">巡檢員</label>
+                        <input type="text" placeholder="輸入姓名" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-400 mb-1">現場作業員</label>
+                        <select id="operator" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-teal-500 staff-list">
+                            <option value="">請選擇作業員...</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="border-stone-100">
+
+            <!-- 6S 稽核清單 -->
+            <section class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-teal-600 font-bold">●</span>
+                        <h2 class="text-sm font-bold text-stone-500 uppercase tracking-wider">6S 稽核項目</h2>
+                    </div>
+                    <span class="text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-100">有異常請立即要求改善</span>
+                </div>
+                
+                <div id="checkItemsContainer" class="space-y-5">
+                    
+                    <!-- 項目 1 -->
+                    <div class="audit-item bg-stone-50 rounded-2xl p-5 border border-stone-200">
+                        <div class="mb-4">
+                            <span class="text-xs font-bold text-teal-600 block mb-1">SAFETY & SORT</span>
+                            <span class="font-bold text-stone-800 text-base">1. 走道是否暢通、無堆放雜物？</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-3 rounded-xl border-2 border-stone-200 font-bold text-stone-400 hover:border-green-500 transition-all">符合 (OK)</button>
+                            <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-3 rounded-xl border-2 border-stone-200 font-bold text-stone-400 hover:border-red-500 transition-all">異常 (NG)</button>
+                        </div>
+                        <div class="ng-action hidden mt-4 p-4 bg-white rounded-xl border-l-4 border-red-500 shadow-sm space-y-3">
+                            <p class="text-xs font-bold text-red-600">⚠️ 現場立即改善指示</p>
+                            <textarea placeholder="請說明異常狀況與改善要求..." class="w-full text-sm border-stone-200 rounded-lg bg-stone-50 p-3 outline-none focus:ring-1 focus:ring-red-400 h-20"></textarea>
+                            <select class="w-full text-sm border-stone-200 rounded-lg bg-stone-50 p-3 outline-none staff-list">
+                                <option value="">指派責任改善人...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 項目 2 -->
+                    <div class="audit-item bg-stone-50 rounded-2xl p-5 border border-stone-200">
+                        <div class="mb-4">
+                            <span class="text-xs font-bold text-teal-600 block mb-1">RESTORATION</span>
+                            <span class="font-bold text-stone-800 text-base">2. 結束工作後，現場是否已復原 (如工具歸位)？</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-3 rounded-xl border-2 border-stone-200 font-bold text-stone-400 hover:border-green-500 transition-all">符合 (OK)</button>
+                            <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-3 rounded-xl border-2 border-stone-200 font-bold text-stone-400 hover:border-red-500 transition-all">異常 (NG)</button>
+                        </div>
+                        <div class="ng-action hidden mt-4 p-4 bg-white rounded-xl border-l-4 border-red-500 shadow-sm space-y-3">
+                            <p class="text-xs font-bold text-red-600">⚠️ 現場立即改善指示</p>
+                            <textarea placeholder="請說明哪些工具或區域未復原..." class="w-full text-sm border-stone-200 rounded-lg bg-stone-50 p-3 outline-none focus:ring-1 focus:ring-red-400 h-20"></textarea>
+                            <select class="w-full text-sm border-stone-200 rounded-lg bg-stone-50 p-3 outline-none staff-list">
+                                <option value="">指派責任改善人...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 項目 3 -->
+                    <div class="audit-item bg-stone-50 rounded-2xl p-5 border border-stone-200">
+                        <div class="mb-4">
+                            <span class="text-xs font-bold text-teal-600 block mb-1">SHINE & STANDARDIZE</span>
+                            <span class="font-bold text-stone-800 text-base">3. 工作檯面是否保持 6S 整潔與規範？</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-3 rounded-xl border-2 border-stone-200 font-bold text-stone-400 hover:border-green-500 transition-all">符合 (OK)</button>
+                            <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-3 rounded-xl border-2 border-stone-200 font-bold text-stone-400 hover:border-red-500 transition-all">異常 (NG)</button>
+                        </div>
+                        <div class="ng-action hidden mt-4 p-4 bg-white rounded-xl border-l-4 border-red-500 shadow-sm space-y-3">
+                            <p class="text-xs font-bold text-red-600">⚠️ 現場立即改善指示</p>
+                            <textarea placeholder="請描述髒污或不符合規範之處..." class="w-full text-sm border-stone-200 rounded-lg bg-stone-50 p-3 outline-none focus:ring-1 focus:ring-red-400 h-20"></textarea>
+                            <select class="w-full text-sm border-stone-200 rounded-lg bg-stone-50 p-3 outline-none staff-list">
+                                <option value="">指派責任改善人...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- 提交按鈕 -->
+            <div class="pt-4">
+                <button type="button" onclick="submitAudit()" class="w-full bg-stone-800 hover:bg-black text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 text-lg">
+                    確認並提交紀錄
+                </button>
+            </div>
+
+        </form>
+
+        <!-- 成功彈窗 -->
+        <div id="successModal" class="hidden fixed inset-0 bg-stone-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+            <div class="bg-white p-10 rounded-[2rem] text-center shadow-2xl max-w-sm w-full border border-stone-100">
+                <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">✓</div>
+                <h3 class="text-2xl font-bold text-stone-800">巡檢提交完畢</h3>
+                <p class="text-stone-500 mt-3 leading-relaxed">紀錄已儲存。請務必落實異常項目的即時改善。</p>
+                <button onclick="location.reload()" class="mt-8 w-full py-4 bg-teal-600 text-white font-bold rounded-2xl shadow-lg shadow-teal-100 hover:bg-teal-700 transition-colors">進行下一筆巡檢</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 員工名單
+        const staffNames = [
+            "林美貴 (0035)", "楊雪霞 (0654)", "葉子愷 (1476)", "阮文會 (A224)", 
+            "迪拉 (A274)", "阮文龍 (A313)", "黃郁雯 (1155)", "蕭元倡 (1225)", 
+            "陳柏旭 (1433)", "陳士丹 (1532)", "馬隆 (A273)", "馬文 (A275)", 
+            "丁文進 (A339)", "阮友商 (A368)", "傑南 (A369)", "爾森 (A370)"
+        ];
+
+        // 初始化下拉選單
+        function initStaffDropdowns() {
+            document.querySelectorAll('.staff-list').forEach(select => {
+                staffNames.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                });
+            });
+        }
+
+        document.getElementById('date').valueAsDate = new Date();
+
+        function setStatus(btn, status) {
+            const container = btn.closest('.audit-item');
+            const actionBox = container.querySelector('.ng-action');
+            const allButtons = container.querySelectorAll('button');
+            
+            allButtons.forEach(b => b.classList.remove('btn-active-ok', 'btn-active-ng'));
+
+            if (status === 'ok') {
+                btn.classList.add('btn-active-ok');
+                actionBox.classList.add('hidden');
+                container.style.borderColor = "#22c55e";
+            } else {
+                btn.classList.add('btn-active-ng');
+                actionBox.classList.remove('hidden');
+                container.style.borderColor = "#ef4444";
+            }
+        }
+
+        function submitAudit() {
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        initStaffDropdowns();
+    </script>
+</body>
+</html>
