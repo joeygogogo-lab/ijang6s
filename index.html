@@ -24,9 +24,8 @@
 
     <div class="max-w-2xl mx-auto space-y-8 pb-12">
         
-        <!-- 稽核表主容器 -->
+        <!-- 頂部標題容器 -->
         <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-stone-200/50 overflow-hidden border border-stone-100">
-            
             <div class="bg-stone-800 p-8 text-white">
                 <div class="flex justify-between items-start mb-4">
                     <span class="bg-teal-500 text-[10px] font-black px-2 py-1 rounded-md tracking-widest uppercase">Cloud Connected</span>
@@ -37,7 +36,6 @@
             </div>
 
             <form id="auditForm" class="p-6 sm:p-10 space-y-10">
-                
                 <!-- 基本資料 -->
                 <section class="space-y-6">
                     <div class="flex items-center gap-3">
@@ -48,7 +46,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div class="space-y-1.5">
                             <label class="text-[11px] font-black text-stone-400 uppercase tracking-tighter ml-1">巡檢日期</label>
-                            <input type="date" id="date" class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500">
+                            <input type="date" id="date" class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500/20">
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-[11px] font-black text-stone-400 uppercase tracking-tighter ml-1">巡檢區域</label>
@@ -61,7 +59,7 @@
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-[11px] font-black text-stone-400 uppercase tracking-tighter ml-1">巡檢人員</label>
-                            <input type="text" id="inspector" placeholder="請輸入姓名" class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-teal-500/20">
+                            <input type="text" id="inspector" placeholder="請輸入姓名" class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm outline-none">
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-[11px] font-black text-stone-400 uppercase tracking-tighter ml-1">現場作業員</label>
@@ -79,16 +77,16 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-1.5 h-6 bg-teal-500 rounded-full"></div>
-                            <h2 class="text-lg font-bold text-stone-800 tracking-tight">6S 稽核項目</h2>
+                            <h2 class="text-lg font-bold text-stone-800 tracking-tight">6S 核心稽核</h2>
                         </div>
                     </div>
                     
                     <div id="checkItemsContainer" class="space-y-8">
-                        <!-- 稽核項目內容 (略，保持與先前版本一致) -->
-                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="走道暢通與安全">
+                        <!-- 6S 項目內容 -->
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="整理(Sort)">
                             <div class="mb-5">
-                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Safety & Sort</span>
-                                <h3 class="font-bold text-stone-800 text-lg">1. 走道是否暢通、無堆放雜物？</h3>
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 1: Sort</span>
+                                <h3 class="font-bold text-stone-800 text-lg">1. 整理：走道是否暢通，無堆放雜物與廢棄物？</h3>
                             </div>
                             <div class="flex gap-4">
                                 <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
@@ -97,7 +95,7 @@
                             <div class="ng-action-box">
                                 <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
                                     <div class="space-y-2">
-                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 異常照片存證 (必填)</label>
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter flex items-center gap-1">📸 異常照片 (必填)</label>
                                         <div class="relative">
                                             <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
                                             <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-200">
@@ -105,52 +103,21 @@
                                                 <span class="text-xs font-bold text-stone-500">點擊拍照</span>
                                             </div>
                                             <div class="image-preview hidden mt-3 relative">
-                                                <img src="" class="w-full h-48 object-cover rounded-xl border border-stone-200">
-                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
+                                                <img src="" class="w-full h-48 object-cover rounded-xl">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full">✕</button>
                                             </div>
                                         </div>
                                     </div>
-                                    <textarea placeholder="描述異常與改善指示..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none focus:ring-1 focus:ring-red-400 resize-none"></textarea>
-                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="工作後復原">
-                            <div class="mb-5">
-                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Restoration</span>
-                                <h3 class="font-bold text-stone-800 text-lg leading-tight">2. 結束工作後，現場是否已復原？</h3>
-                            </div>
-                            <div class="flex gap-4">
-                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
-                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
-                            </div>
-                            <div class="ng-action-box">
-                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 異常照片存證</label>
-                                        <div class="relative">
-                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
-                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50">
-                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
-                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
-                                            </div>
-                                            <div class="image-preview hidden mt-3 relative">
-                                                <img src="" class="w-full h-48 object-cover rounded-xl border border-stone-200">
-                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <textarea placeholder="描述缺失細節與改善內容..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none focus:ring-1 focus:ring-red-400 resize-none"></textarea>
-                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
+                                    <textarea placeholder="請說明異常狀況與改善要求..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none focus:ring-1 focus:ring-red-400"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">改善責任人...</option></select>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="6S整潔規範">
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="整頓(Set)">
                             <div class="mb-5">
-                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Shine & Sustain</span>
-                                <h3 class="font-bold text-stone-800 text-lg leading-tight">3. 工作檯面是否保持 6S 整潔規範？</h3>
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 2: Set in Order</span>
+                                <h3 class="font-bold text-stone-800 text-lg">2. 整頓：工具、模具是否定位定量並歸位？</h3>
                             </div>
                             <div class="flex gap-4">
                                 <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
@@ -159,7 +126,38 @@
                             <div class="ng-action-box">
                                 <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
                                     <div class="space-y-2">
-                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 異常照片存證</label>
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-200">
+                                                <span class="text-2xl mb-1">📷</span>
+                                                <span class="text-xs font-bold text-stone-500 text-center">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述缺失細節..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">改善責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="清掃(Shine)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 3: Shine</span>
+                                <h3 class="font-bold text-stone-800 text-lg">3. 清掃：工作檯面、機台與地面是否保持潔淨、無油漬？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
                                         <div class="relative">
                                             <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
                                             <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50">
@@ -167,13 +165,106 @@
                                                 <span class="text-xs font-bold text-stone-500">點擊拍照</span>
                                             </div>
                                             <div class="image-preview hidden mt-3 relative">
-                                                <img src="" class="w-full h-48 object-cover rounded-xl border border-stone-200">
-                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs font-bold shadow-lg">✕</button>
+                                                <img src="" class="w-full h-48 object-cover rounded-xl">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full">✕</button>
                                             </div>
                                         </div>
                                     </div>
-                                    <textarea placeholder="描述髒污問題與規範指示..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none focus:ring-1 focus:ring-red-400 resize-none"></textarea>
-                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">指派責任人...</option></select>
+                                    <textarea placeholder="描述髒污問題..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">改善責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="清潔(Standard)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 4: Standardize</span>
+                                <h3 class="font-bold text-stone-800 text-lg">4. 清潔：各類標示是否明確且維持美觀標準？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述標示缺失..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">改善責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="素養(Sustain)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 5: Sustain</span>
+                                <h3 class="font-bold text-stone-800 text-lg">5. 素養：現場人員是否穿戴正確 PPE (防護具)？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述違規細節..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">改善責任人...</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-item bg-stone-50 rounded-[2.5rem] p-7 border border-stone-200" data-item-name="安全(Safety)">
+                            <div class="mb-5">
+                                <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest block mb-1">Step 6: Safety</span>
+                                <h3 class="font-bold text-stone-800 text-lg">6. 安全：消防器材與逃生動線是否無遮蔽？</h3>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" onclick="setStatus(this, 'ok')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">符合 OK</button>
+                                <button type="button" onclick="setStatus(this, 'ng')" class="flex-1 py-4 rounded-2xl border-2 border-stone-200 font-black text-stone-400 uppercase tracking-widest text-xs transition-all">異常 NG</button>
+                            </div>
+                            <div class="ng-action-box">
+                                <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm space-y-5">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-red-500 uppercase tracking-tighter">📸 拍照存證</label>
+                                        <div class="relative">
+                                            <input type="file" accept="image/*" capture="environment" class="hidden photo-input" onchange="previewImage(this)">
+                                            <div onclick="this.previousElementSibling.click()" class="photo-upload-label flex flex-col items-center justify-center p-6 rounded-2xl bg-stone-50">
+                                                <span class="text-2xl mb-1 text-stone-400">📷</span>
+                                                <span class="text-xs font-bold text-stone-500">點擊拍照</span>
+                                            </div>
+                                            <div class="image-preview hidden mt-3 relative">
+                                                <img src="" class="w-full h-48 object-cover rounded-xl">
+                                                <button type="button" onclick="removeImage(this)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="描述安全隱患..." class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 h-24 action-note outline-none"></textarea>
+                                    <select class="w-full text-sm border-stone-200 rounded-xl bg-stone-50 p-4 staff-list responsible-person outline-none"><option value="">改善責任人...</option></select>
                                 </div>
                             </div>
                         </div>
@@ -188,23 +279,23 @@
             </form>
         </div>
 
-        <!-- 數據看板 -->
+        <!-- 數據看板 (數據會隨點擊即時更新) -->
         <div class="bg-white rounded-[2.5rem] shadow-xl p-8 border border-stone-100">
             <div class="flex items-center gap-3 mb-8">
                 <div class="w-1.5 h-6 bg-teal-500 rounded-full"></div>
-                <h2 class="text-xl font-bold text-stone-800 tracking-tight">當前稽核數據概況</h2>
+                <h2 class="text-xl font-bold text-stone-800 tracking-tight">稽核即時統計</h2>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 text-center">
                 <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100">
-                    <div class="text-[10px] font-black text-stone-400 uppercase mb-1">Total Audit</div>
+                    <div class="text-[10px] font-black text-stone-400 uppercase mb-1">Audit Count</div>
                     <div class="text-2xl font-black text-stone-800" id="stat-total">0</div>
                 </div>
                 <div class="bg-green-50 p-4 rounded-2xl border border-green-100">
-                    <div class="text-[10px] font-black text-green-600 uppercase mb-1">Success Rate</div>
+                    <div class="text-[10px] font-black text-green-600 uppercase mb-1">Pass Rate</div>
                     <div class="text-2xl font-black text-green-600" id="stat-ok-rate">0%</div>
                 </div>
                 <div class="bg-red-50 p-4 rounded-2xl border border-red-100 col-span-2 md:col-span-1">
-                    <div class="text-[10px] font-black text-red-600 uppercase mb-1">Issues</div>
+                    <div class="text-[10px] font-black text-red-600 uppercase mb-1">NG Items</div>
                     <div class="text-2xl font-black text-red-600" id="stat-ng">0</div>
                 </div>
             </div>
@@ -219,14 +310,14 @@
             <div class="bg-white p-12 rounded-[3rem] text-center shadow-2xl max-w-sm w-full border border-stone-100 animate-in fade-in zoom-in duration-300">
                 <div class="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-8 font-black">✓</div>
                 <h3 class="text-2xl font-black text-stone-800 tracking-tight">紀錄已成功同步</h3>
-                <p class="text-stone-500 mt-4 leading-relaxed font-medium">數據已傳送至試算表。</p>
-                <button onclick="location.reload()" class="mt-10 w-full py-5 bg-teal-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-teal-100">下一次巡檢</button>
+                <p class="text-stone-500 mt-4 leading-relaxed font-medium">數據已傳送至雲端試算表，請至後台查看。</p>
+                <button onclick="location.reload()" class="mt-10 w-full py-5 bg-teal-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg">下一次巡檢</button>
             </div>
         </div>
     </div>
 
     <script>
-        // *** 您的 Google Apps Script 網址 ***
+        // 設定您的 Apps Script 網址
         const scriptURL = 'https://script.google.com/macros/s/AKfycbwqb0fadDyi5XKnZPvs73FRQ60PS4acF5M4J0dRgxyLs90PIv0KUGpqALBPEiN-yclqDg/exec'; 
 
         const staffNames = ["林美貴 (0035)", "楊雪霞 (0654)", "葉子愷 (1476)", "阮文會 (A224)", "迪拉 (A274)", "阮文龍 (A313)", "黃郁雯 (1155)", "蕭元倡 (1225)", "陳柏旭 (1433)", "陳士丹 (1532)", "馬隆 (A273)", "馬文 (A275)", "丁文進 (A339)", "阮友商 (A368)", "傑南 (A369)", "爾森 (A370)"];
@@ -299,13 +390,13 @@
             const ctx1 = document.getElementById('ratioChart').getContext('2d');
             ratioChart = new Chart(ctx1, {
                 type: 'doughnut',
-                data: { labels: ['符合 OK', '異常 NG'], datasets: [{ data: [0, 0], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 0 }] },
-                options: { maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+                data: { labels: ['OK', 'NG'], datasets: [{ data: [1, 0], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 0 }] },
+                options: { maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom' } } }
             });
             const ctx2 = document.getElementById('areaChart').getContext('2d');
             areaChart = new Chart(ctx2, {
                 type: 'bar',
-                data: { labels: ['辦公前', '廣場', '鐵管', '沖折床'], datasets: [{ label: '異常次數', data: [0, 0, 0, 0], backgroundColor: '#1c1917', borderRadius: 8 }] },
+                data: { labels: ['辦公', '廣場', '鐵管', '沖折'], datasets: [{ label: '異常次數', data: [0, 0, 0, 0], backgroundColor: '#1c1917', borderRadius: 8 }] },
                 options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } }
             });
         }
@@ -363,7 +454,7 @@
             }
 
             if (results.length === 0) {
-                alert('請至少完成一項稽核項目！');
+                alert('請至少填寫一個項目！');
                 btn.disabled = false;
                 btn.innerHTML = originalText;
                 return;
@@ -375,7 +466,7 @@
                 }
                 document.getElementById('successModal').classList.remove('hidden');
             } catch (error) {
-                alert('同步失敗。請確認 Apps Script 部署設定。');
+                alert('傳送失敗，請確認網路連線。');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
